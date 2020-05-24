@@ -26,8 +26,9 @@ import xyz.acrylicstyle.minecraft.v1_15_R1.NBTTagList;
 import xyz.acrylicstyle.safariNet.utils.SafariNetType;
 import xyz.acrylicstyle.safariNet.utils.SafariNetUtils;
 import xyz.acrylicstyle.shared.NMSAPI;
-import xyz.acrylicstyle.tomeito_api.utils.Log;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 public class SafariNetPlugin extends JavaPlugin implements Listener {
@@ -80,8 +81,16 @@ public class SafariNetPlugin extends JavaPlugin implements Listener {
 
     public static CollectionList<UUID> lock = new CollectionList<>();
 
+    public static final List<EntityType> excludedEntities = new ArrayList<>();
+
+    static {
+        excludedEntities.add(EntityType.ENDER_DRAGON);
+        excludedEntities.add(EntityType.WITHER);
+    }
+
     private void interact(Entity clickedEntity, Player player) {
         if (!clickedEntity.getType().isSpawnable() || !clickedEntity.getType().isAlive()) return;
+        if (excludedEntities.contains(clickedEntity.getType())) return;
         ItemStack item = player.getInventory().getItemInMainHand();
         if (!SafariNetUtils.isSafariNet(item)) return;
         if (SafariNetUtils.isEmpty(item)) {
