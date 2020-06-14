@@ -1,6 +1,7 @@
 package xyz.acrylicstyle.safariNet;
 
 import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
@@ -19,13 +20,10 @@ import org.bukkit.inventory.ShapedRecipe;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitRunnable;
 import util.CollectionList;
-import util.reflect.Ref;
-import xyz.acrylicstyle.craftbukkit.v1_8_R3.entity.CraftEntity;
-import xyz.acrylicstyle.minecraft.v1_15_R1.NBTTagCompound;
-import xyz.acrylicstyle.minecraft.v1_15_R1.NBTTagList;
+import xyz.acrylicstyle.paper.nbt.NBTTagCompound;
+import xyz.acrylicstyle.paper.nbt.NBTTagList;
 import xyz.acrylicstyle.safariNet.utils.SafariNetType;
 import xyz.acrylicstyle.safariNet.utils.SafariNetUtils;
-import xyz.acrylicstyle.shared.NMSAPI;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -65,13 +63,6 @@ public class SafariNetPlugin extends JavaPlugin implements Listener {
         Bukkit.removeRecipe(safariNet_singleUse); // r1
     }
 
-    //@EventHandler
-    //public void onPlayerInteractAtEntity(PlayerInteractAtEntityEvent e) {
-    //    Log.info("Fired #AtEntity");
-    //    if (e.getHand() != EquipmentSlot.HAND) return;
-    //    interact(e.getRightClicked(), e.getPlayer());
-    //}
-
     @EventHandler
     public void onPlayerInteractEntity(PlayerInteractEntityEvent e) {
         if (e.getHand() != EquipmentSlot.HAND) return;
@@ -90,6 +81,10 @@ public class SafariNetPlugin extends JavaPlugin implements Listener {
 
     private void interact(Entity clickedEntity, Player player) {
         if (!clickedEntity.getType().isSpawnable() || !clickedEntity.getType().isAlive()) return;
+        if (clickedEntity.getWorld().getName().equalsIgnoreCase("world")) {
+            player.sendActionBar(ChatColor.RED + "このワールドではエンティティを捕まえられません。");
+            return;
+        }
         if (excludedEntities.contains(clickedEntity.getType())) return;
         ItemStack item = player.getInventory().getItemInMainHand();
         if (!SafariNetUtils.isSafariNet(item)) return;
@@ -101,13 +96,8 @@ public class SafariNetPlugin extends JavaPlugin implements Listener {
                     lock.remove(player.getUniqueId());
                 }
             }.runTaskLater(this, 2); // wait 0.1 second
-            xyz.acrylicstyle.minecraft.v1_15_R1.Entity handle = new xyz.acrylicstyle.minecraft.v1_15_R1.Entity(
-                    Ref.getMethod(CraftEntity.CLASS, "getHandle").invokeObj(clickedEntity)
-            );
             NBTTagCompound tag = new NBTTagCompound();
-            Ref.getClass(xyz.acrylicstyle.minecraft.v1_15_R1.Entity.CLASS)
-                    .getMethod("save", NBTTagCompound.CLASS)
-                    .invokeObj(Ref.getDeclaredField(NMSAPI.class, "o").accessible(true).get(handle), tag.getHandle());
+            clickedEntity.save(tag);
             player.getInventory().setItemInMainHand(SafariNetUtils.updateSafariNet(SafariNetUtils.store(item, clickedEntity.getType(), tag)));
             new BukkitRunnable() {
                 @Override
@@ -129,16 +119,37 @@ public class SafariNetPlugin extends JavaPlugin implements Listener {
         if (SafariNetUtils.isEmpty(item)) return;
         EntityType type = SafariNetUtils.getEntityType(item);
         if (type == null) return;
+        if (e.getPlayer().getWorld().getName().equalsIgnoreCase("world")
+                && (type != EntityType.VILLAGER
+                && type != EntityType.SHEEP
+                && type != EntityType.PIG
+                && type != EntityType.CAT
+                && type != EntityType.COW
+                && type != EntityType.COD
+                && type != EntityType.BAT
+                && type != EntityType.FOX
+                && type != EntityType.CHICKEN
+                && type != EntityType.HORSE
+                && type != EntityType.LLAMA
+                && type != EntityType.WANDERING_TRADER
+                && type != EntityType.TRADER_LLAMA
+                && type != EntityType.IRON_GOLEM
+                && type != EntityType.RABBIT
+                && type != EntityType.OCELOT
+                && type != EntityType.MULE
+                && type != EntityType.MUSHROOM_COW
+                && type != EntityType.SQUID
+                && type != EntityType.ZOMBIE_HORSE
+                && type != EntityType.SKELETON_HORSE)) {
+            e.getPlayer().sendActionBar(ChatColor.RED + "この種類のMobはこのワールドは出せません。");
+            return;
+        }
         Location location = e.getClickedBlock().getLocation().clone().add(0.5, 1, 0.5);
         Entity entity = location.getWorld().spawnEntity(location, type);
-        xyz.acrylicstyle.minecraft.v1_15_R1.Entity handle = new xyz.acrylicstyle.minecraft.v1_15_R1.Entity(
-                Ref.getMethod(CraftEntity.CLASS, "getHandle").invokeObj(entity)
-        );
         NBTTagCompound tag = SafariNetUtils.getData(item);
         NBTTagList list = (NBTTagList) tag.get("Pos");
         tag.set("Pos", SafariNetUtils.createList(list, location.getX(), location.getY(), location.getZ()));
-        Ref.getMethod(xyz.acrylicstyle.minecraft.v1_15_R1.Entity.CLASS, "f", NBTTagCompound.CLASS)
-                .invokeObj(Ref.getDeclaredField(NMSAPI.class, "o").accessible(true).get(handle), tag.getHandle());
+        entity.load(tag);
         if (SafariNetUtils.getSafariNetType(item) == SafariNetType.SINGLE_USE) {
             e.getPlayer().getInventory().setItemInMainHand(null);
         } else {

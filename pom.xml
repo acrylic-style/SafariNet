@@ -68,13 +68,8 @@
         </dependency>
         <dependency>
             <groupId>xyz.acrylicstyle</groupId>
-            <artifactId>NMSAPI-1.15.2</artifactId>
-            <version>0.1.44</version>
-        </dependency>
-        <dependency>
-            <groupId>xyz.acrylicstyle</groupId>
             <artifactId>api</artifactId>
-            <version>0.4.1</version>
+            <version>0.4.6</version>
             <scope>provided</scope>
         </dependency>
     </dependencies>

@@ -2,3 +2,7 @@ name: SafariNet
 main: xyz.acrylicstyle.safariNet.SafariNetPlugin
 version: "1.0"
 api-version: "1.15"
+depend:
+  - TomeitoLib
+softdepend:
+  - CardboardBox

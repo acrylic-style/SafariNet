@@ -9,39 +9,42 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import xyz.acrylicstyle.craftbukkit.v1_15_R1.inventory.CraftItemStack;
-import xyz.acrylicstyle.minecraft.v1_15_R1.NBTTagCompound;
-import xyz.acrylicstyle.minecraft.v1_15_R1.NBTTagDouble;
-import xyz.acrylicstyle.minecraft.v1_15_R1.NBTTagList;
+import xyz.acrylicstyle.paper.Paper;
+import xyz.acrylicstyle.paper.inventory.ItemStackUtils;
+import xyz.acrylicstyle.paper.nbt.NBTBase;
+import xyz.acrylicstyle.paper.nbt.NBTTagCompound;
+import xyz.acrylicstyle.paper.nbt.NBTTagList;
+import xyz.acrylicstyle.paper.nbt.NBTTagDouble;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.UUID;
 
 public class SafariNetUtils {
     public static ItemStack getSafariNet(SafariNetType type) {
         ItemStack item = new ItemStack(Material.CLOCK);
-        xyz.acrylicstyle.minecraft.v1_15_R1.ItemStack is = CraftItemStack.asNMSCopy(item);
-        NBTTagCompound tag = is.getOrCreateTag();
+        ItemStackUtils util = Paper.itemStack(item);
+        NBTTagCompound tag = util.getOrCreateTag();
         tag.setBoolean("safariNetSingleUse", type == SafariNetType.SINGLE_USE);
         tag.setString("safariNetType", "null");
         tag.set("safariNetData", new NBTTagCompound());
         tag.setString("uuid", UUID.randomUUID().toString());
-        is.setTag(tag);
-        item = CraftItemStack.asBukkitCopy(is);
-        return updateSafariNet(item);
+        util.setTag(tag);
+        return updateSafariNet(util.getItemStack());
     }
 
     public static boolean isSafariNet(@Nullable ItemStack itemStack) {
         if (itemStack == null) return false;
         if (itemStack.getType() != Material.CLOCK) return false;
-        return CraftItemStack.asNMSCopy(itemStack).getOrCreateTag().hasKey("safariNetData");
+        return Paper.itemStack(itemStack).getOrCreateTag().hasKey("safariNetData");
     }
 
     @NotNull
     public static SafariNetType getSafariNetType(ItemStack itemStack) {
         if (!isSafariNet(itemStack)) throw new IllegalStateException("This item isn't safari net!");
         itemStack = addMissingTags(itemStack);
-        NBTTagCompound tag = CraftItemStack.asNMSCopy(itemStack).getOrCreateTag();
+        NBTTagCompound tag = Paper.itemStack(itemStack).getOrCreateTag();
         if (!tag.hasKey("safariNetSingleUse")) tag.setBoolean("safariNetSingleUse", true);
         return tag.getBoolean("safariNetSingleUse") ? SafariNetType.SINGLE_USE : SafariNetType.RE_USABLE;
     }
@@ -50,22 +53,22 @@ public class SafariNetUtils {
     public static ItemStack saveEntityType(@NotNull ItemStack itemStack, @Nullable EntityType entityType) {
         if (!isSafariNet(itemStack)) throw new IllegalStateException("This item isn't safari net!");
         itemStack = addMissingTags(itemStack);
-        xyz.acrylicstyle.minecraft.v1_15_R1.ItemStack handle = CraftItemStack.asNMSCopy(itemStack);
-        NBTTagCompound tag = handle.getOrCreateTag();
+        ItemStackUtils util = Paper.itemStack(itemStack);
+        NBTTagCompound tag = util.getOrCreateTag();
         tag.setString("safariNetType", entityType == null ? "null" : entityType.name());
-        handle.setTag(tag);
-        return CraftItemStack.asBukkitCopy(handle);
+        util.setTag(tag);
+        return util.getItemStack();
     }
 
     @NotNull
     public static ItemStack saveEntityData(@NotNull ItemStack itemStack, @NotNull NBTTagCompound nbtTagCompound) {
         if (!isSafariNet(itemStack)) throw new IllegalStateException("This item isn't safari net!");
         itemStack = addMissingTags(itemStack);
-        xyz.acrylicstyle.minecraft.v1_15_R1.ItemStack handle = CraftItemStack.asNMSCopy(itemStack);
-        NBTTagCompound tag = handle.getOrCreateTag();
+        ItemStackUtils util = Paper.itemStack(itemStack);
+        NBTTagCompound tag = util.getOrCreateTag();
         tag.set("safariNetData", nbtTagCompound);
-        handle.setTag(tag);
-        return CraftItemStack.asBukkitCopy(handle);
+        util.setTag(tag);
+        return util.getItemStack();
     }
 
     @NotNull
@@ -78,7 +81,7 @@ public class SafariNetUtils {
     public static NBTTagCompound getData(ItemStack itemStack) {
         if (!isSafariNet(itemStack)) throw new IllegalStateException("This item isn't safari net!");
         itemStack = addMissingTags(itemStack);
-        NBTTagCompound tag = CraftItemStack.asNMSCopy(itemStack).getOrCreateTag();
+        NBTTagCompound tag = Paper.itemStack(itemStack).getOrCreateTag();
         if (!tag.hasKey("safariNetData")) tag.set("safariNetData", new NBTTagCompound());
         return tag.getCompound("safariNetData");
     }
@@ -86,8 +89,8 @@ public class SafariNetUtils {
     @NotNull
     public static ItemStack addMissingTags(ItemStack itemStack) {
         if (!isSafariNet(itemStack)) return itemStack;
-        xyz.acrylicstyle.minecraft.v1_15_R1.ItemStack handle = CraftItemStack.asNMSCopy(itemStack);
-        NBTTagCompound tag = handle.getOrCreateTag();
+        ItemStackUtils util = Paper.itemStack(itemStack);
+        NBTTagCompound tag = util.getOrCreateTag();
         boolean modified = false;
         if (!tag.hasKey("safariNetType")) {
             tag.setString("safariNetType", "null");
@@ -101,17 +104,16 @@ public class SafariNetUtils {
             tag.setString("uuid", UUID.randomUUID().toString());
             modified = true;
         }
-        if (modified) handle.setTag(tag);
-        return CraftItemStack.asBukkitCopy(handle);
+        if (modified) util.setTag(tag);
+        return util.getItemStack();
     }
 
     @Nullable
     public static EntityType getEntityType(ItemStack itemStack) {
         ItemStack is = addMissingTags(itemStack);
-        xyz.acrylicstyle.minecraft.v1_15_R1.ItemStack handle = CraftItemStack.asNMSCopy(is);
-        NBTTagCompound tag = handle.getOrCreateTag();
+        NBTTagCompound tag = Paper.itemStack(is).getOrCreateTag();
         String type = tag.getString("safariNetType");
-        return type.equals("null") ? null : EntityType.valueOf(type);
+        return type.equals("null") || type.equals("") ? null : EntityType.valueOf(type);
     }
 
     public static boolean isEmpty(ItemStack itemStack) {
@@ -121,7 +123,7 @@ public class SafariNetUtils {
     @NotNull
     public static ItemStack updateSafariNet(ItemStack itemStack) {
         if (!isSafariNet(itemStack)) throw new IllegalStateException("This item isn't safari net!");
-        NBTTagCompound tag = CraftItemStack.asNMSCopy(itemStack).getOrCreateTag();
+        NBTTagCompound tag = Paper.itemStack(itemStack).getOrCreateTag();
         ItemMeta meta = itemStack.getItemMeta();
         boolean singleUse = tag.getBoolean("safariNetSingleUse");
         if (isEmpty(itemStack)) {
@@ -141,7 +143,12 @@ public class SafariNetUtils {
 
     @NotNull
     public static NBTTagList createList(NBTTagList list, double... doubles) {
-        for (int i = 0; i < 3; i++) list.set(i, NBTTagDouble.a(doubles[i]));
+        if (list == null) {
+            List<NBTBase> list2 = new ArrayList<>(3);
+            for (int i = 0; i < 3; i++) list2.add(NBTTagDouble.create(doubles[i]));
+            return new NBTTagList(list2, (byte) NBTTagDouble.ID);
+        }
+        for (int i = 0; i < 3; i++) list.set(i, NBTTagDouble.create(doubles[i]));
         return list;
     }
 }
