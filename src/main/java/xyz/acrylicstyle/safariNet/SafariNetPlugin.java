@@ -148,7 +148,7 @@ public class SafariNetPlugin extends JavaPlugin implements Listener {
         Entity entity = location.getWorld().spawnEntity(location, type);
         NBTTagCompound tag = SafariNetUtils.getData(item);
         NBTTagList list = (NBTTagList) tag.get("Pos");
-        tag.set("Pos", SafariNetUtils.createList(list, location.getX(), location.getY(), location.getZ()));
+        tag.set("Pos", SafariNetUtils.createList(location.getX(), location.getY(), location.getZ()));
         entity.load(tag);
         if (SafariNetUtils.getSafariNetType(item) == SafariNetType.SINGLE_USE) {
             e.getPlayer().getInventory().setItemInMainHand(null);

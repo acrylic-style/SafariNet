@@ -142,13 +142,9 @@ public class SafariNetUtils {
     }
 
     @NotNull
-    public static NBTTagList createList(NBTTagList list, double... doubles) {
-        if (list == null) {
-            List<NBTBase> list2 = new ArrayList<>(3);
-            for (int i = 0; i < 3; i++) list2.add(NBTTagDouble.create(doubles[i]));
-            return new NBTTagList(list2, (byte) NBTTagDouble.ID);
-        }
-        for (int i = 0; i < 3; i++) list.set(i, NBTTagDouble.create(doubles[i]));
-        return list;
+    public static NBTTagList createList(double... doubles) {
+        List<NBTBase> list2 = new ArrayList<>(3);
+        for (int i = 0; i < 3; i++) list2.add(NBTTagDouble.create(doubles[i]));
+        return new NBTTagList(list2, (byte) NBTTagDouble.ID);
     }
 }
