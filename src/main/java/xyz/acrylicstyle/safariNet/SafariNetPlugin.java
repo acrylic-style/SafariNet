@@ -21,7 +21,6 @@ import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitRunnable;
 import util.CollectionList;
 import xyz.acrylicstyle.paper.nbt.NBTTagCompound;
-import xyz.acrylicstyle.paper.nbt.NBTTagList;
 import xyz.acrylicstyle.safariNet.utils.SafariNetType;
 import xyz.acrylicstyle.safariNet.utils.SafariNetUtils;
 
@@ -81,13 +80,13 @@ public class SafariNetPlugin extends JavaPlugin implements Listener {
 
     private void interact(Entity clickedEntity, Player player) {
         if (!clickedEntity.getType().isSpawnable() || !clickedEntity.getType().isAlive()) return;
+        if (excludedEntities.contains(clickedEntity.getType())) return;
+        ItemStack item = player.getInventory().getItemInMainHand();
+        if (!SafariNetUtils.isSafariNet(item)) return;
         if (clickedEntity.getWorld().getName().equalsIgnoreCase("world")) {
             player.sendActionBar(ChatColor.RED + "このワールドではエンティティを捕まえられません。");
             return;
         }
-        if (excludedEntities.contains(clickedEntity.getType())) return;
-        ItemStack item = player.getInventory().getItemInMainHand();
-        if (!SafariNetUtils.isSafariNet(item)) return;
         if (SafariNetUtils.isEmpty(item)) {
             lock.add(player.getUniqueId());
             new BukkitRunnable() {
@@ -147,7 +146,6 @@ public class SafariNetPlugin extends JavaPlugin implements Listener {
         Location location = e.getClickedBlock().getLocation().clone().add(0.5, 1, 0.5);
         Entity entity = location.getWorld().spawnEntity(location, type);
         NBTTagCompound tag = SafariNetUtils.getData(item);
-        NBTTagList list = (NBTTagList) tag.get("Pos");
         tag.set("Pos", SafariNetUtils.createList(location.getX(), location.getY(), location.getZ()));
         entity.load(tag);
         if (SafariNetUtils.getSafariNetType(item) == SafariNetType.SINGLE_USE) {
