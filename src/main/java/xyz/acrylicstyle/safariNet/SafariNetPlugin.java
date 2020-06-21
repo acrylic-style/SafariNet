@@ -95,9 +95,7 @@ public class SafariNetPlugin extends JavaPlugin implements Listener {
                     lock.remove(player.getUniqueId());
                 }
             }.runTaskLater(this, 2); // wait 0.1 second
-            NBTTagCompound tag = new NBTTagCompound();
-            clickedEntity.save(tag);
-            player.getInventory().setItemInMainHand(SafariNetUtils.updateSafariNet(SafariNetUtils.store(item, clickedEntity.getType(), tag)));
+            player.getInventory().setItemInMainHand(SafariNetUtils.updateSafariNet(SafariNetUtils.store(item, clickedEntity.getType(), (NBTTagCompound) clickedEntity.getTag().clone())));
             new BukkitRunnable() {
                 @Override
                 public void run() {
@@ -139,7 +137,12 @@ public class SafariNetPlugin extends JavaPlugin implements Listener {
                 && type != EntityType.MUSHROOM_COW
                 && type != EntityType.SQUID
                 && type != EntityType.ZOMBIE_HORSE
-                && type != EntityType.SKELETON_HORSE)) {
+                && type != EntityType.SKELETON_HORSE
+                && type != EntityType.PARROT
+                && type != EntityType.PANDA
+                && type != EntityType.DONKEY
+                && type != EntityType.TURTLE
+                && type != EntityType.POLAR_BEAR)) {
             e.getPlayer().sendActionBar(ChatColor.RED + "この種類のMobはこのワールドは出せません。");
             return;
         }
