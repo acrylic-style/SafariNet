@@ -20,9 +20,11 @@ import org.bukkit.inventory.ShapedRecipe;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitRunnable;
 import util.CollectionList;
+import util.ICollectionList;
 import xyz.acrylicstyle.paper.nbt.NBTTagCompound;
 import xyz.acrylicstyle.safariNet.utils.SafariNetType;
 import xyz.acrylicstyle.safariNet.utils.SafariNetUtils;
+import xyz.acrylicstyle.tomeito_api.utils.Log;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -83,7 +85,7 @@ public class SafariNetPlugin extends JavaPlugin implements Listener {
         if (excludedEntities.contains(clickedEntity.getType())) return;
         ItemStack item = player.getInventory().getItemInMainHand();
         if (!SafariNetUtils.isSafariNet(item)) return;
-        if (clickedEntity.getWorld().getName().equalsIgnoreCase("world")) {
+        if (false && clickedEntity.getWorld().getName().equalsIgnoreCase("world")) {
             player.sendActionBar(ChatColor.RED + "このワールドではエンティティを捕まえられません。");
             return;
         }
@@ -96,6 +98,7 @@ public class SafariNetPlugin extends JavaPlugin implements Listener {
                 }
             }.runTaskLater(this, 2); // wait 0.1 second
             player.getInventory().setItemInMainHand(SafariNetUtils.updateSafariNet(SafariNetUtils.store(item, clickedEntity.getType(), (NBTTagCompound) clickedEntity.getTag().clone())));
+            Log.info(player.getName() + " stored " + clickedEntity.getType() + " (" + clickedEntity.getEntityId() + ") into the safari net");
             new BukkitRunnable() {
                 @Override
                 public void run() {
@@ -142,6 +145,8 @@ public class SafariNetPlugin extends JavaPlugin implements Listener {
                 && type != EntityType.PANDA
                 && type != EntityType.DONKEY
                 && type != EntityType.TURTLE
+                && type != EntityType.DOLPHIN
+                && type != EntityType.STRIDER
                 && type != EntityType.POLAR_BEAR)) {
             e.getPlayer().sendActionBar(ChatColor.RED + "この種類のMobはこのワールドは出せません。");
             return;
@@ -151,6 +156,7 @@ public class SafariNetPlugin extends JavaPlugin implements Listener {
         NBTTagCompound tag = SafariNetUtils.getData(item);
         tag.set("Pos", SafariNetUtils.createList(location.getX(), location.getY(), location.getZ()));
         entity.load(tag);
+        Log.info(e.getPlayer().getName() + " released " + entity.getType() + " (" + entity.getEntityId() + ") into the world");
         if (SafariNetUtils.getSafariNetType(item) == SafariNetType.SINGLE_USE) {
             e.getPlayer().getInventory().setItemInMainHand(null);
         } else {
@@ -163,5 +169,16 @@ public class SafariNetPlugin extends JavaPlugin implements Listener {
         ItemStack item = e.getInventory().getResult();
         if (!SafariNetUtils.isSafariNet(item)) return;
         e.getInventory().setResult(SafariNetUtils.getSafariNet(SafariNetUtils.getSafariNetType(item)));
+        if (e.getPlayer() == null) return;
+        new BukkitRunnable() {
+            @Override
+            public void run() {
+                ICollectionList.asList(e.getPlayer().getInventory().getContents()).foreach((item, index) -> {
+                    if (SafariNetUtils.isSafariNet(item)) {
+                        e.getPlayer().getInventory().setItem(index, SafariNetUtils.resetUniqueId(item));
+                    }
+                });
+            }
+        }.runTaskLater(this, 2);
     }
 }

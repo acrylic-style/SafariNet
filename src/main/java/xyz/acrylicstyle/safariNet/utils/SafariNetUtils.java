@@ -15,7 +15,6 @@ import xyz.acrylicstyle.paper.nbt.NBTBase;
 import xyz.acrylicstyle.paper.nbt.NBTTagCompound;
 import xyz.acrylicstyle.paper.nbt.NBTTagList;
 import xyz.acrylicstyle.paper.nbt.NBTTagDouble;
-import xyz.acrylicstyle.tomeito_api.utils.Log;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -39,6 +38,15 @@ public class SafariNetUtils {
         if (itemStack == null) return false;
         if (itemStack.getType() != Material.CLOCK) return false;
         return Paper.itemStack(itemStack).getOrCreateTag().hasKey("safariNetData");
+    }
+
+    public static ItemStack resetUniqueId(@Nullable ItemStack itemStack) {
+        if (!isSafariNet(itemStack)) return itemStack;
+        ItemStackUtils util = Paper.itemStack(itemStack);
+        NBTTagCompound tag = util.getOrCreateTag();
+        tag.setString("uuid", UUID.randomUUID().toString());
+        util.setTag(tag);
+        return util.getItemStack();
     }
 
     @NotNull
