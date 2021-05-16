@@ -119,7 +119,7 @@ public class SafariNetPlugin extends JavaPlugin implements Listener {
         EntityType type = SafariNetUtils.getEntityType(item);
         if (type == null) return;
         // allow lists
-        if (e.getPlayer().getWorld().getName().equalsIgnoreCase("world")
+        if (false && e.getPlayer().getWorld().getName().equalsIgnoreCase("world")
                 && (type != EntityType.VILLAGER
                 && type != EntityType.SHEEP
                 && type != EntityType.PIG
@@ -147,6 +147,8 @@ public class SafariNetPlugin extends JavaPlugin implements Listener {
                 && type != EntityType.TURTLE
                 && type != EntityType.DOLPHIN
                 && type != EntityType.STRIDER
+                && type != EntityType.GIANT
+                && type != EntityType.BLAZE
                 && type != EntityType.POLAR_BEAR)) {
             e.getPlayer().spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent(ChatColor.RED + "この種類のMobはこのワールドでは出せません。"));
             return;
