@@ -61,15 +61,15 @@
     </repositories>
     <dependencies>
         <dependency>
-            <groupId>com.destroystokyo.paper</groupId>
-            <artifactId>paper-api</artifactId>
-            <version>1.16.1-R0.1-SNAPSHOT</version>
+            <groupId>org.spigotmc</groupId>
+            <artifactId>spigot</artifactId>
+            <version>1.16.5-R0.1-SNAPSHOT</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>xyz.acrylicstyle</groupId>
-            <artifactId>api</artifactId>
-            <version>0.5.0</version>
+            <artifactId>java-util-all</artifactId>
+            <version>0.14.4</version>
             <scope>provided</scope>
         </dependency>
     </dependencies>
