@@ -1,4 +1,12 @@
-*.iml
-dependency-reduced-pom.xml
+.gradle/
 .idea/
+build/
+*.iml
+logs/
+*.log
+*.txt
+*.jar
+!/gradle/wrapper/gradle-wrapper.jar
+/*.json
+config/*.yml
 target/

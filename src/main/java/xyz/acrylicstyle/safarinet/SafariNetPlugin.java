@@ -1,14 +1,14 @@
-package xyz.acrylicstyle.safariNet;
+package xyz.acrylicstyle.safarinet;
 
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.TextComponent;
-import net.minecraft.server.v1_16_R3.NBTTagCompound;
+import net.minecraft.nbt.NBTTagCompound;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
-import org.bukkit.craftbukkit.v1_16_R3.entity.CraftEntity;
+import org.bukkit.craftbukkit.v1_20_R1.entity.CraftEntity;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
@@ -23,20 +23,18 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.ShapedRecipe;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitRunnable;
-import util.CollectionList;
-import util.ICollectionList;
-import xyz.acrylicstyle.safariNet.utils.SafariNetType;
-import xyz.acrylicstyle.safariNet.utils.SafariNetUtils;
+import xyz.acrylicstyle.safarinet.utils.SafariNetType;
+import xyz.acrylicstyle.safarinet.utils.SafariNetUtils;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.UUID;
+import java.util.*;
 
 public class SafariNetPlugin extends JavaPlugin implements Listener {
+    private static final Set<EntityType> DISALLOWED_ENTITIES = new HashSet<>(Arrays.asList(EntityType.ENDER_DRAGON, EntityType.WITHER));
     public static NamespacedKey safariNet_singleUse = null;
     public static NamespacedKey safariNet = null;
     public static SafariNetPlugin instance = null;
+    public static int singleUseModel = 1;
+    public static int reUsableModel = 2;
 
     @Override
     public void onLoad() {
@@ -45,6 +43,8 @@ public class SafariNetPlugin extends JavaPlugin implements Listener {
 
     @Override
     public void onEnable() {
+        singleUseModel = getConfig().getInt("custom-model-data.single-use", singleUseModel);
+        reUsableModel = getConfig().getInt("custom-model-data.re-usable", reUsableModel);
         Bukkit.getPluginManager().registerEvents(this, this);
         safariNet_singleUse = new NamespacedKey(this, "safari_net_single_use");
         safariNet = new NamespacedKey(this, "safari_net");
@@ -74,7 +74,7 @@ public class SafariNetPlugin extends JavaPlugin implements Listener {
         interact(e.getRightClicked(), e.getPlayer());
     }
 
-    public static CollectionList<UUID> lock = new CollectionList<>();
+    public static Set<UUID> lock = new HashSet<>();
 
     public static final List<EntityType> excludedEntities = new ArrayList<>();
 
@@ -85,7 +85,10 @@ public class SafariNetPlugin extends JavaPlugin implements Listener {
 
     private void interact(Entity clickedEntity, Player player) {
         if (!clickedEntity.getType().isSpawnable() || !clickedEntity.getType().isAlive()) return;
-        if (excludedEntities.contains(clickedEntity.getType())) return;
+        if (DISALLOWED_ENTITIES.contains(clickedEntity.getType())) {
+            player.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText("§cこの種類のエンティティはキャプチャーできません。"));
+            return;
+        }
         ItemStack item = player.getInventory().getItemInMainHand();
         if (!SafariNetUtils.isSafariNet(item)) return;
         if (SafariNetUtils.isEmpty(item)) {
@@ -96,14 +99,18 @@ public class SafariNetPlugin extends JavaPlugin implements Listener {
                     lock.remove(player.getUniqueId());
                 }
             }.runTaskLater(this, 2); // wait 0.1 second
-            player.getInventory().setItemInMainHand(SafariNetUtils.updateSafariNet(SafariNetUtils.store(item, clickedEntity.getType(), ((CraftEntity) clickedEntity).getHandle().save(new NBTTagCompound()))));
-            getLogger().info(player.getName() + " stored " + clickedEntity.getType() + " (" + clickedEntity.getEntityId() + ") into the safari net");
-            new BukkitRunnable() {
-                @Override
-                public void run() {
+            player.getInventory().setItemInMainHand(
+                    SafariNetUtils.updateSafariNet(
+                            SafariNetUtils.store(
+                                    item,
+                                    clickedEntity.getType(),
+                                    ((CraftEntity) clickedEntity).getHandle().f(new NBTTagCompound())
+                            )
+                    )
+            );
+            getLogger().info(player.getName() + " stored " + clickedEntity.getType() + " (" + clickedEntity.getEntityId() + ") into the safari net at " + player.getLocation());
+            // there was 1 tick delay before removing the entity
                     clickedEntity.remove();
-                }
-            }.runTaskLater(this, 1);
         }
     }
 
@@ -118,47 +125,16 @@ public class SafariNetPlugin extends JavaPlugin implements Listener {
         if (SafariNetUtils.isEmpty(item)) return;
         EntityType type = SafariNetUtils.getEntityType(item);
         if (type == null) return;
-        // allow lists
-        if (false && e.getPlayer().getWorld().getName().equalsIgnoreCase("world")
-                && (type != EntityType.VILLAGER
-                && type != EntityType.SHEEP
-                && type != EntityType.PIG
-                && type != EntityType.CAT
-                && type != EntityType.COW
-                && type != EntityType.COD
-                && type != EntityType.BAT
-                && type != EntityType.FOX
-                && type != EntityType.CHICKEN
-                && type != EntityType.HORSE
-                && type != EntityType.LLAMA
-                && type != EntityType.WANDERING_TRADER
-                && type != EntityType.TRADER_LLAMA
-                && type != EntityType.IRON_GOLEM
-                && type != EntityType.RABBIT
-                && type != EntityType.OCELOT
-                && type != EntityType.MULE
-                && type != EntityType.MUSHROOM_COW
-                && type != EntityType.SQUID
-                && type != EntityType.ZOMBIE_HORSE
-                && type != EntityType.SKELETON_HORSE
-                && type != EntityType.PARROT
-                && type != EntityType.PANDA
-                && type != EntityType.DONKEY
-                && type != EntityType.TURTLE
-                && type != EntityType.DOLPHIN
-                && type != EntityType.STRIDER
-                && type != EntityType.GIANT
-                && type != EntityType.BLAZE
-                && type != EntityType.POLAR_BEAR)) {
-            e.getPlayer().spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent(ChatColor.RED + "この種類のMobはこのワールドでは出せません。"));
+        if (DISALLOWED_ENTITIES.contains(type)) {
+            e.getPlayer().spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent(ChatColor.RED + "この種類のエンティティは出せません。"));
             return;
         }
         Location location = e.getClickedBlock().getLocation().clone().add(0.5, 1, 0.5);
         Entity entity = Objects.requireNonNull(location.getWorld()).spawnEntity(location, type);
         NBTTagCompound tag = SafariNetUtils.getData(item);
-        tag.set("Pos", SafariNetUtils.createList(location.getX(), location.getY(), location.getZ()));
-        ((CraftEntity) entity).getHandle().load(tag);
-        getLogger().info(e.getPlayer().getName() + " released " + entity.getType() + " (" + entity.getEntityId() + ") into the world");
+        tag.a("Pos", SafariNetUtils.createList(location.getX(), location.getY(), location.getZ()));
+        ((CraftEntity) entity).getHandle().g(tag);
+        getLogger().info(e.getPlayer().getName() + " released " + entity.getType() + " (" + entity.getEntityId() + "): " + location);
         if (SafariNetUtils.getSafariNetType(item) == SafariNetType.SINGLE_USE) {
             e.getPlayer().getInventory().setItemInMainHand(null);
         } else {
@@ -169,18 +145,20 @@ public class SafariNetPlugin extends JavaPlugin implements Listener {
     @EventHandler
     public void onPrepareItemCraft(PrepareItemCraftEvent e) {
         ItemStack item = e.getInventory().getResult();
-        if (!SafariNetUtils.isSafariNet(item)) return;
-        e.getInventory().setResult(SafariNetUtils.getSafariNet(SafariNetUtils.getSafariNetType(item)));
-        e.getView().getPlayer();
-        new BukkitRunnable() {
-            @Override
-            public void run() {
-                ICollectionList.asList(e.getView().getPlayer().getInventory().getContents()).foreach((item, index) -> {
-                    if (SafariNetUtils.isSafariNet(item)) {
-                        e.getView().getPlayer().getInventory().setItem(index, SafariNetUtils.resetUniqueId(item));
-                    }
-                });
+        if (SafariNetUtils.isSafariNet(item)) {
+            e.getInventory().setResult(SafariNetUtils.getSafariNet(SafariNetUtils.getSafariNetType(item)));
+            return;
+        }
+        SafariNetType type = null;
+        int count = 0;
+        for (ItemStack stack : e.getInventory().getMatrix()) {
+            if (SafariNetUtils.isSafariNet(stack)) {
+                type = SafariNetUtils.getSafariNetType(stack);
+                count++;
             }
-        }.runTaskLater(this, 2);
+        }
+        if (count == 1) {
+            e.getInventory().setResult(SafariNetUtils.getSafariNet(type));
+        }
     }
 }

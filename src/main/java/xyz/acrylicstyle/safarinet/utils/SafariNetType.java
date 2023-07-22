@@ -1,4 +1,4 @@
-package xyz.acrylicstyle.safariNet.utils;
+package xyz.acrylicstyle.safarinet.utils;
 
 public enum SafariNetType {
     SINGLE_USE,
