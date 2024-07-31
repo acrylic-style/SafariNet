@@ -2,13 +2,13 @@ package xyz.acrylicstyle.safarinet;
 
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.TextComponent;
-import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.nbt.CompoundTag;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
-import org.bukkit.craftbukkit.v1_20_R1.entity.CraftEntity;
+import org.bukkit.craftbukkit.v1_20_R2.entity.CraftEntity;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
@@ -23,6 +23,7 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.ShapedRecipe;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitRunnable;
+import xyz.acrylicstyle.safarinet.commands.SafariNetCommand;
 import xyz.acrylicstyle.safarinet.utils.SafariNetType;
 import xyz.acrylicstyle.safarinet.utils.SafariNetUtils;
 
@@ -43,6 +44,7 @@ public class SafariNetPlugin extends JavaPlugin implements Listener {
 
     @Override
     public void onEnable() {
+        saveDefaultConfig();
         singleUseModel = getConfig().getInt("custom-model-data.single-use", singleUseModel);
         reUsableModel = getConfig().getInt("custom-model-data.re-usable", reUsableModel);
         Bukkit.getPluginManager().registerEvents(this, this);
@@ -57,8 +59,11 @@ public class SafariNetPlugin extends JavaPlugin implements Listener {
         r2.shape(" E ", "EGE", " E ");
         r2.setIngredient('E', Material.ENDER_PEARL);
         r2.setIngredient('G', Material.GHAST_TEAR);
-        Bukkit.addRecipe(r1);
-        Bukkit.addRecipe(r2);
+        if (!getConfig().getBoolean("disable-recipes", false)) {
+            Bukkit.addRecipe(r1);
+            Bukkit.addRecipe(r2);
+        }
+        Objects.requireNonNull(getCommand("safarinet")).setExecutor(new SafariNetCommand());
     }
 
     @Override
@@ -99,12 +104,14 @@ public class SafariNetPlugin extends JavaPlugin implements Listener {
                     lock.remove(player.getUniqueId());
                 }
             }.runTaskLater(this, 2); // wait 0.1 second
+            CompoundTag tag = new CompoundTag();
+            ((CraftEntity) clickedEntity).getHandle().save(tag);
             player.getInventory().setItemInMainHand(
                     SafariNetUtils.updateSafariNet(
                             SafariNetUtils.store(
                                     item,
                                     clickedEntity.getType(),
-                                    ((CraftEntity) clickedEntity).getHandle().f(new NBTTagCompound())
+                                    tag
                             )
                     )
             );
@@ -131,14 +138,14 @@ public class SafariNetPlugin extends JavaPlugin implements Listener {
         }
         Location location = e.getClickedBlock().getLocation().clone().add(0.5, 1, 0.5);
         Entity entity = Objects.requireNonNull(location.getWorld()).spawnEntity(location, type);
-        NBTTagCompound tag = SafariNetUtils.getData(item);
-        tag.a("Pos", SafariNetUtils.createList(location.getX(), location.getY(), location.getZ()));
-        ((CraftEntity) entity).getHandle().g(tag);
+        CompoundTag tag = SafariNetUtils.getData(item);
+        tag.put("Pos", SafariNetUtils.createList(location.getX(), location.getY(), location.getZ()));
+        ((CraftEntity) entity).getHandle().load(tag);
         getLogger().info(e.getPlayer().getName() + " released " + entity.getType() + " (" + entity.getEntityId() + "): " + location);
         if (SafariNetUtils.getSafariNetType(item) == SafariNetType.SINGLE_USE) {
             e.getPlayer().getInventory().setItemInMainHand(null);
         } else {
-            e.getPlayer().getInventory().setItemInMainHand(SafariNetUtils.updateSafariNet(SafariNetUtils.store(item, null, new NBTTagCompound())));
+            e.getPlayer().getInventory().setItemInMainHand(SafariNetUtils.updateSafariNet(SafariNetUtils.store(item, null, new CompoundTag())));
         }
     }
 
